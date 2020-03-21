@@ -30,7 +30,7 @@ public class NewsController {
     @RequestMapping(path = "/news", method = RequestMethod.GET)
     public ResponseEntity<?> getInfoNews(@RequestParam(name = "country") String country,
                                          @RequestParam(name = "category") String category) {
-        News[] news;
+        News news = null;
         XWPFDocument document;
         for (NewsService newsService : newsServices) {
             news = newsService.getNews(country, category);
@@ -42,6 +42,10 @@ public class NewsController {
             } catch (IOException e) {
             }
         }
-        return ResponseEntity.ok("Empty");
+        if (news != null) {
+            return ResponseEntity.ok(news);
+        } else {
+            return ResponseEntity.ok("Empty");
+        }
     }
 }

@@ -6,9 +6,10 @@ import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ua.edu.sumdu.j2ee.zykov.model.News;
-import ua.edu.sumdu.j2ee.zykov.util.JsonParser;
+import ua.edu.sumdu.j2ee.zykov.util.NewsApiConverter;
 import ua.edu.sumdu.j2ee.zykov.util.Network;
 
 import javax.imageio.ImageIO;
@@ -20,14 +21,22 @@ import java.util.Map;
 
 @Service
 public class NewsApiService implements NewsService {
+    @Value("${data.news.token}")
+    private String token;
+    private final NewsApiConverter newsApiConverter;
+
+    public NewsApiService(NewsApiConverter newsApiConverter) {
+        this.newsApiConverter = newsApiConverter;
+    }
+
     @Override
-    public News[] getNews(String country, String category) {
-        Map<String, String> headers = new HashMap<>();
-        headers.put("country", country);
-        headers.put("category", category);
-        News[] news = null;
+    public News getNews(String country, String category) {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("country", country);
+        parameters.put("category", category);
+        News news = null;
         try {
-            news = JsonParser.getNewsArrayFromJson(Network.getResponse("http://newsapi.org/v2/top-headlines", headers));
+            news = newsApiConverter.convert(Network.getResponse("http://newsapi.org/v2/top-headlines", token, parameters));
         } catch (IOException e) {
 
         }
@@ -35,15 +44,15 @@ public class NewsApiService implements NewsService {
     }
 
     @Override
-    public XWPFDocument getDocument(News[] news) {
+    public XWPFDocument getDocument(News news) {
         int size = 128;
         XWPFDocument document = new XWPFDocument();
-
-        for (News tempNews : news) {
+        News.Article[] articles = news.getArticles();
+        for (News.Article article : articles) {
             XWPFParagraph title = document.createParagraph();
             title.setAlignment(ParagraphAlignment.CENTER);
             XWPFRun titleRun = title.createRun();
-            titleRun.setText(tempNews.getTitle());
+            titleRun.setText(article.getTitle());
             titleRun.setColor("000000");
             titleRun.setBold(true);
             titleRun.setFontFamily("Times New Roman");
@@ -56,7 +65,7 @@ public class NewsApiService implements NewsService {
 
             InputStream in = null;
             try {
-                in = Network.getImageInputStream(tempNews.getUrlToImage());
+                in = Network.getImageInputStream(article.getUrlToImage());
             } catch (IOException e) {
 
             }
@@ -73,7 +82,7 @@ public class NewsApiService implements NewsService {
             }
 
             try {
-                in = Network.getImageInputStream(tempNews.getUrlToImage());
+                in = Network.getImageInputStream(article.getUrlToImage());
             } catch (IOException e) {
 
             }
@@ -88,7 +97,7 @@ public class NewsApiService implements NewsService {
             XWPFParagraph description = document.createParagraph();
             description.setAlignment(ParagraphAlignment.LEFT);
             XWPFRun descriptionRun = description.createRun();
-            descriptionRun.setText(tempNews.getDescription());
+            descriptionRun.setText(article.getDescription());
             descriptionRun.setColor("000000");
             descriptionRun.setBold(true);
             descriptionRun.setFontFamily("Times New Roman");
@@ -97,7 +106,7 @@ public class NewsApiService implements NewsService {
             XWPFParagraph url = document.createParagraph();
             url.setAlignment(ParagraphAlignment.LEFT);
             XWPFRun urlRun = url.createRun();
-            urlRun.setText(tempNews.getUrl());
+            urlRun.setText(article.getUrl());
             urlRun.setColor("009933");
             urlRun.setBold(true);
             urlRun.setFontFamily("Times New Roman");
@@ -106,7 +115,7 @@ public class NewsApiService implements NewsService {
             XWPFParagraph author = document.createParagraph();
             author.setAlignment(ParagraphAlignment.RIGHT);
             XWPFRun authorRun = author.createRun();
-            authorRun.setText(tempNews.getAuthor());
+            authorRun.setText(article.getAuthor());
             authorRun.setColor("000000");
             authorRun.setBold(true);
             authorRun.setFontFamily("Times New Roman");
