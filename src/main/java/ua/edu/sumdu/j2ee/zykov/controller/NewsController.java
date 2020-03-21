@@ -15,6 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.*;
 
 @RestController
 public class NewsController {
@@ -35,22 +36,30 @@ public class NewsController {
                                          @RequestParam(name = "category") String category) {
         News news = null;
         XWPFDocument document;
-        for (NewsService newsService : newsServices) {
-            news = newsService.getNews(country, category);
-            document = newsService.getDocument(news);
+        ExecutorService executorService = Executors.newFixedThreadPool(5);
+        CompletionService<News> completionService = new ExecutorCompletionService<>(executorService);
 
-            try (FileOutputStream outputStream = new FileOutputStream("news_" + category + ".docx")) {
-                document.write(outputStream);
-            } catch (FileNotFoundException e) {
-                logger.error("File not found - " + e.getMessage());
-            } catch (IOException e) {
-                logger.error("Failed save document - " + e.getMessage());
+        for (NewsService newsService : newsServices) {
+            Future<News> submit = completionService.submit(() -> newsService.getNews(country, category));
+            try {
+                news = submit.get();
+                document = newsService.getDocument(news);
+                try (FileOutputStream outputStream = new FileOutputStream("news_" + category + ".docx")) {
+                    document.write(outputStream);
+                } catch (FileNotFoundException e) {
+                    logger.error("File not found - " + e.getMessage());
+                } catch (IOException e) {
+                    logger.error("Failed save document - " + e.getMessage());
+                }
+            } catch (InterruptedException e) {
+                logger.error("Interrupted thread - " + e.getMessage());
+            } catch (ExecutionException e) {
+                logger.error("Execution thread - " + e.getMessage());
+            }
+            if (news != null) {
+                return ResponseEntity.ok(news);
             }
         }
-        if (news != null) {
-            return ResponseEntity.ok(news);
-        } else {
-            return ResponseEntity.ok("Empty");
-        }
+        return ResponseEntity.ok("Empty");
     }
 }
