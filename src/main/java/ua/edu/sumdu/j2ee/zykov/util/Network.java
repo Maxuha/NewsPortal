@@ -11,12 +11,9 @@ import java.io.InputStream;
 import java.util.Map;
 
 public class Network {
-    @Value("${data.news.token}")
-    private static String token;
     private static OkHttpClient client = new OkHttpClient();
 
-    public static String getResponse(String url, Map<String, String> parameters) throws IOException {
-
+    public static String getResponse(String url, String token, Map<String, String> parameters) throws IOException {
         HttpUrl.Builder urlBuilder = HttpUrl.parse(url).newBuilder();
         for (Map.Entry<String, String> entry : parameters.entrySet()) {
             urlBuilder.addQueryParameter(entry.getKey(), entry.getValue());

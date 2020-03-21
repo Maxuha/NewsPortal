@@ -46,12 +46,15 @@ public abstract class News {
                 '}';
     }
 
-    static class Article {
+    public static class Article {
         private String title;
         private String description;
         private String author;
         private String url;
         private String urlToImage;
+
+        public Article() {
+        }
 
         public Article(String title, String description, String author, String url, String urlToImage) {
             this.title = title;
@@ -99,6 +102,17 @@ public abstract class News {
 
         public void setUrlToImage(String urlToImage) {
             this.urlToImage = urlToImage;
+        }
+
+        @Override
+        public String toString() {
+            return "Article{" +
+                    "title='" + title + '\'' +
+                    ", description='" + description + '\'' +
+                    ", author='" + author + '\'' +
+                    ", url='" + url + '\'' +
+                    ", urlToImage='" + urlToImage + '\'' +
+                    '}';
         }
     }
 }
