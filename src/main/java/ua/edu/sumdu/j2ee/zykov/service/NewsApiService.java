@@ -6,6 +6,7 @@ import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.springframework.stereotype.Service;
 import ua.edu.sumdu.j2ee.zykov.model.News;
 import ua.edu.sumdu.j2ee.zykov.util.JsonParser;
 import ua.edu.sumdu.j2ee.zykov.util.Network;
@@ -17,6 +18,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+@Service
 public class NewsApiService implements NewsService {
     @Override
     public News[] getNews(String country, String category) {
@@ -33,7 +35,7 @@ public class NewsApiService implements NewsService {
     }
 
     @Override
-    public XWPFDocument getDocument(News[] news, String categoryName) {
+    public XWPFDocument getDocument(News[] news) {
         int size = 128;
         XWPFDocument document = new XWPFDocument();
 

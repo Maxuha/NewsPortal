@@ -5,5 +5,5 @@ import ua.edu.sumdu.j2ee.zykov.model.News;
 
 public interface NewsService {
     News[] getNews(String country, String category);
-    XWPFDocument getDocument(News[] news, String categoryName);
+    XWPFDocument getDocument(News[] news);
 }
