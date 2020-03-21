@@ -6,6 +6,8 @@ import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ua.edu.sumdu.j2ee.zykov.model.News;
@@ -21,6 +23,7 @@ import java.util.Map;
 
 @Service
 public class NewsApiService implements NewsService {
+    private static Logger logger = LoggerFactory.getLogger(NewsApiService.class);
     @Value("${data.news.token}")
     private String token;
     private final NewsApiConverter newsApiConverter;
@@ -37,8 +40,9 @@ public class NewsApiService implements NewsService {
         News news = null;
         try {
             news = newsApiConverter.convert(Network.getResponse("http://newsapi.org/v2/top-headlines", token, parameters));
+            logger.info("Success load news");
         } catch (IOException e) {
-
+            logger.error("Failed load news - " + e.getMessage());
         }
         return news;
     }
@@ -64,34 +68,31 @@ public class NewsApiService implements NewsService {
             imageRun.setTextPosition(20);
 
             InputStream in = null;
-            try {
-                in = Network.getImageInputStream(article.getUrlToImage());
-            } catch (IOException e) {
-
-            }
             BufferedImage bufferedImage = null;
             try {
+                in = Network.getImageInputStream(article.getUrlToImage());
                 bufferedImage = ImageIO.read(in);
             } catch (IOException e) {
-            }  finally {
+                logger.warn("Image not load - " + e.getMessage());
+            } finally {
                 try {
-                    in.close();
+                    if (in != null) {
+                        in.close();
+                    }
                 } catch (IOException e) {
-                    System.out.println("Error close stream.");
+                    logger.warn("Error close stream - " + e.getMessage());
                 }
             }
 
-            try {
-                in = Network.getImageInputStream(article.getUrlToImage());
-            } catch (IOException e) {
-
-            }
-            assert bufferedImage != null;
-            try {
-                imageRun.addPicture(in, XWPFDocument.PICTURE_TYPE_PNG, "out.png", Units.toEMU(size /
-                        (float)bufferedImage.getHeight() * bufferedImage.getWidth()), Units.toEMU(size));
-            } catch (InvalidFormatException e) {
-            } catch (IOException e) {
+            if (bufferedImage != null) {
+                try {
+                    imageRun.addPicture(in, XWPFDocument.PICTURE_TYPE_PNG, "out.png", Units.toEMU(size /
+                            (float) bufferedImage.getHeight() * bufferedImage.getWidth()), Units.toEMU(size));
+                } catch (InvalidFormatException e) {
+                    logger.error("Invalid format - " + e.getMessage());
+                } catch (IOException e) {
+                    logger.error("Failed to add image");
+                }
             }
 
             XWPFParagraph description = document.createParagraph();
@@ -121,6 +122,7 @@ public class NewsApiService implements NewsService {
             authorRun.setFontFamily("Times New Roman");
             authorRun.setFontSize(14);
             authorRun.setTextPosition(30);
+            logger.info("Added news to document");
         }
         return document;
     }

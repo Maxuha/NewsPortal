@@ -1,6 +1,8 @@
 package ua.edu.sumdu.j2ee.zykov.controller;
 
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -16,6 +18,7 @@ import java.util.List;
 
 @RestController
 public class NewsController {
+    private static Logger logger = LoggerFactory.getLogger(NewsController.class);
     private final List<NewsService> newsServices;
 
     public NewsController(List<NewsService> newsServices) {
@@ -39,7 +42,9 @@ public class NewsController {
             try (FileOutputStream outputStream = new FileOutputStream("news_" + category + ".docx")) {
                 document.write(outputStream);
             } catch (FileNotFoundException e) {
+                logger.error("File not found - " + e.getMessage());
             } catch (IOException e) {
+                logger.error("Failed save document - " + e.getMessage());
             }
         }
         if (news != null) {
