@@ -72,8 +72,13 @@ public class NewsApiService implements NewsService {
             try {
                 in = Network.getImageInputStream(article.getUrlToImage());
                 bufferedImage = ImageIO.read(in);
+                in = Network.getImageInputStream(article.getUrlToImage());
+                imageRun.addPicture(in, XWPFDocument.PICTURE_TYPE_PNG, "out.png", Units.toEMU(size /
+                        (float) bufferedImage.getHeight() * bufferedImage.getWidth()), Units.toEMU(size));
             } catch (IOException e) {
                 logger.warn("Image not load - " + e.getMessage());
+            } catch (InvalidFormatException e) {
+                logger.error("Invalid format - " + e.getMessage());
             } finally {
                 try {
                     if (in != null) {
@@ -81,17 +86,6 @@ public class NewsApiService implements NewsService {
                     }
                 } catch (IOException e) {
                     logger.warn("Error close stream - " + e.getMessage());
-                }
-            }
-
-            if (bufferedImage != null) {
-                try {
-                    imageRun.addPicture(in, XWPFDocument.PICTURE_TYPE_PNG, "out.png", Units.toEMU(size /
-                            (float) bufferedImage.getHeight() * bufferedImage.getWidth()), Units.toEMU(size));
-                } catch (InvalidFormatException e) {
-                    logger.error("Invalid format - " + e.getMessage());
-                } catch (IOException e) {
-                    logger.error("Failed to add image");
                 }
             }
 
