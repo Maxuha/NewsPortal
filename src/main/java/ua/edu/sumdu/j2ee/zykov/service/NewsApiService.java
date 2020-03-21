@@ -33,7 +33,7 @@ public class NewsApiService implements NewsService {
     }
 
     @Override
-    public XWPFDocument getDocument(News[] news, String categoryName) {
+    public XWPFDocument getDocument(News[] news) {
         int size = 128;
         XWPFDocument document = new XWPFDocument();
 
