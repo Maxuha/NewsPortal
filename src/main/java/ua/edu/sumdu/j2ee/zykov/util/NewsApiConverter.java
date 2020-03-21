@@ -3,6 +3,8 @@ package ua.edu.sumdu.j2ee.zykov.util;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -11,6 +13,7 @@ import ua.edu.sumdu.j2ee.zykov.model.NewsApi;
 
 @Component
 public class NewsApiConverter implements Converter<String, NewsApi> {
+    private static Logger logger = LoggerFactory.getLogger(NewsApiConverter.class);
     @Value("${data.image.url}")
     private static String urlToNoImage;
 
@@ -36,12 +39,11 @@ public class NewsApiConverter implements Converter<String, NewsApi> {
                 }
                 news = new NewsApi(status, totalPages, articles);
             } else {
-
+                logger.warn("Failed get news from service");
             }
         } catch (JSONException e) {
-
+            logger.error("Failed json parse - " + e.getMessage());
         }
-
         return news;
     }
 }
