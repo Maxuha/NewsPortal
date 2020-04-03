@@ -9,6 +9,7 @@ import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import ua.edu.sumdu.j2ee.zykov.model.News;
 import ua.edu.sumdu.j2ee.zykov.util.NewsApiConverter;
@@ -32,6 +33,7 @@ public class NewsApiService implements NewsService {
         this.newsApiConverter = newsApiConverter;
     }
 
+    @Cacheable(cacheNames = "news", key = "#country")
     @Override
     public News getNews(String country, String category) {
         Map<String, String> parameters = new HashMap<>();
