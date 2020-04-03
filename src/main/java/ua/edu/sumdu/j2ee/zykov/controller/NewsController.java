@@ -50,6 +50,8 @@ public class NewsController {
                     logger.error("File not found - " + e.getMessage());
                 } catch (IOException e) {
                     logger.error("Failed save document - " + e.getMessage());
+                } catch (NullPointerException e) {
+                    logger.info("No news");
                 }
             } catch (InterruptedException e) {
                 logger.error("Interrupted thread - " + e.getMessage());
