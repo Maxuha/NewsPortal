@@ -40,7 +40,7 @@ public class NewsController {
         CompletionService<News> completionService = new ExecutorCompletionService<>(executorService);
 
         for (NewsService newsService : newsServices) {
-            Future<News> submit = completionService.submit(() -> newsService.getNews(country, category));
+            Future<News> submit = completionService.submit(() -> newsService.getNews(country, category, country + category));
             try {
                 news = submit.get();
                 document = newsService.getDocument(news);

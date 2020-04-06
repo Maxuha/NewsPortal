@@ -24,6 +24,7 @@ public class Network {
                 .url(url)
                 .build();
         Response response = client.newCall(request).execute();
+        System.out.println("Connect");
         return response.body().string();
     }
 

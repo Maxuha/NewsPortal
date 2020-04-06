@@ -9,6 +9,7 @@ import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import ua.edu.sumdu.j2ee.zykov.model.News;
@@ -19,6 +20,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,9 +35,9 @@ public class NewsApiService implements NewsService {
         this.newsApiConverter = newsApiConverter;
     }
 
-    @Cacheable(cacheNames = "news", key = "#country")
+    @Cacheable(cacheNames = "news", key = "#countryCategoryKey")
     @Override
-    public News getNews(String country, String category) {
+    public News getNews(String country, String category, String countryCategoryKey) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("country", country);
         parameters.put("category", category);
@@ -49,6 +51,13 @@ public class NewsApiService implements NewsService {
         return news;
     }
 
+    @CachePut(cacheNames = "news", key = "#countryCategoryKey")
+    @Override
+    public News getNewsAndPut(String country, String category, String countryCategoryKey) {
+        return getNews(country, category, countryCategoryKey);
+    }
+
+    @Cacheable(cacheNames = "document", key = "#news")
     @Override
     public XWPFDocument getDocument(News news) {
         int size = 128;
@@ -77,6 +86,10 @@ public class NewsApiService implements NewsService {
                 in = Network.getImageInputStream(article.getUrlToImage());
                 imageRun.addPicture(in, XWPFDocument.PICTURE_TYPE_PNG, "out.png", Units.toEMU(size /
                         (float) bufferedImage.getHeight() * bufferedImage.getWidth()), Units.toEMU(size));
+            }catch (IllegalArgumentException e) {
+                logger.error("Illegal argument - " + e.getMessage());
+            }  catch (IllegalStateException e) {
+                logger.error("Illegal state - " + e.getMessage());
             } catch (IOException e) {
                 logger.warn("Image not load - " + e.getMessage());
             } catch (InvalidFormatException e) {
