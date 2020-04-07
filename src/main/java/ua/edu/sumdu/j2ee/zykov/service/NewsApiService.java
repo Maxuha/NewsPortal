@@ -109,7 +109,7 @@ public class NewsApiService implements NewsService {
             XWPFRun descriptionRun = description.createRun();
             descriptionRun.setText(article.getDescription());
             descriptionRun.setColor("000000");
-            descriptionRun.setBold(true);
+            descriptionRun.setBold(false);
             descriptionRun.setFontFamily("Times New Roman");
             descriptionRun.setFontSize(14);
 
