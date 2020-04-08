@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import ua.edu.sumdu.j2ee.zykov.model.Article;
 import ua.edu.sumdu.j2ee.zykov.model.News;
 import ua.edu.sumdu.j2ee.zykov.util.NewsApiConverter;
 import ua.edu.sumdu.j2ee.zykov.util.Network;
@@ -61,8 +62,8 @@ public class NewsApiService implements NewsService {
     public XWPFDocument getDocument(News news) {
         int size = 128;
         XWPFDocument document = new XWPFDocument();
-        News.Article[] articles = news.getArticles();
-        for (News.Article article : articles) {
+        Article[] articles = news.getArticles();
+        for (Article article : articles) {
             XWPFParagraph title = document.createParagraph();
             title.setAlignment(ParagraphAlignment.CENTER);
             XWPFRun titleRun = title.createRun();
