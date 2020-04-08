@@ -44,9 +44,9 @@ public class NewsApiService implements NewsService {
         News news = null;
         try {
             news = newsApiConverter.convert(Network.getResponse("http://newsapi.org/v2/top-headlines", token, parameters));
-            logger.info("Success load news");
+            logger.info("News successfully received from a remote server newsapi.org");
         } catch (IOException e) {
-            logger.error("Failed load news - " + e.getMessage());
+            logger.error("Failed to receive news a remote server newsapi.org - " + e.getMessage());
         }
         return news;
     }
@@ -79,7 +79,7 @@ public class NewsApiService implements NewsService {
             imageRun.setTextPosition(20);
 
             InputStream in = null;
-            BufferedImage bufferedImage = null;
+            BufferedImage bufferedImage;
             try {
                 in = Network.getImageInputStream(article.getUrlToImage());
                 bufferedImage = ImageIO.read(in);
@@ -87,22 +87,22 @@ public class NewsApiService implements NewsService {
                 imageRun.addPicture(in, XWPFDocument.PICTURE_TYPE_PNG, "out.png", Units.toEMU(size /
                         (float) bufferedImage.getHeight() * bufferedImage.getWidth()), Units.toEMU(size));
             } catch (NullPointerException e) {
-                logger.error("No found image");
+                logger.error("No found image {} - {}", article.getUrlToImage(), e.getMessage());
             } catch (IllegalArgumentException e) {
-                logger.error("Illegal argument - " + e.getMessage());
+                logger.error("Illegal argument for image {} - {}", article.getUrlToImage(), e.getMessage());
             } catch (IllegalStateException e) {
-                logger.error("Illegal state - " + e.getMessage());
+                logger.error("Illegal state for image {} - {}", article.getUrlToImage(), e.getMessage());
             } catch (IOException e) {
-                logger.warn("Image not load - " + e.getMessage());
+                logger.error("Image not load {} - {}", article.getUrlToImage(), e.getMessage());
             } catch (InvalidFormatException e) {
-                logger.error("Invalid format - " + e.getMessage());
+                logger.error("Invalid format picture {} - {}", article.getUrlToImage(), e.getMessage());
             } finally {
                 try {
                     if (in != null) {
                         in.close();
                     }
                 } catch (IOException e) {
-                    logger.warn("Error close stream - " + e.getMessage());
+                    logger.warn("Error close stream for load image {} - {}", article.getUrlToImage(), e.getMessage());
                 }
             }
 
@@ -133,7 +133,7 @@ public class NewsApiService implements NewsService {
             authorRun.setFontFamily("Times New Roman");
             authorRun.setFontSize(14);
             authorRun.setTextPosition(30);
-            logger.info("Added news to document");
+            logger.info("Added news {} to document", article.getUrl());
         }
         return document;
     }

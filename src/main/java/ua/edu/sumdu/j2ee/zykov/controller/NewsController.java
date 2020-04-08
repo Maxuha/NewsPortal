@@ -17,6 +17,8 @@ import ua.edu.sumdu.j2ee.zykov.util.MediaTypeUtils;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -48,13 +50,13 @@ public class NewsController {
             Future<News> submit = completionService.submit(() -> newsService.getNews(country, category, country + category));
             try {
                 news = submit.get();
-                document = newsService.getDocument(news);
             } catch (InterruptedException e) {
-                logger.error("Interrupted thread - " + e.getMessage());
+                logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
             } catch (ExecutionException e) {
-                logger.error("Execution thread - " + e.getMessage());
+                logger.error("Execution thread get news for country {} and category {} - {}", country, category, e.getMessage());
             }
             if (news != null) {
+                document = newsService.getDocument(news);
                 String filename = "news_" + category + ".docx";
                 MediaType mediaType = MediaTypeUtils.getMediaTypeForFileName(this.servletContext, filename);
                 response.setContentType(mediaType.getType());
