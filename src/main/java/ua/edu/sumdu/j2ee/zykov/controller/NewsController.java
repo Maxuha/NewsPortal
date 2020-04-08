@@ -40,9 +40,9 @@ public class NewsController {
 
     @RequestMapping(path = "/news", method = RequestMethod.GET)
     public void getInfoNews(HttpServletResponse response, @RequestParam(name = "country") String country,
-                            @RequestParam(name = "category") String category) throws IOException {
+                            @RequestParam(name = "category") String category) {
         News news = null;
-        XWPFDocument document = null;
+        XWPFDocument document;
         ExecutorService executorService = Executors.newFixedThreadPool(5);
         CompletionService<News> completionService = new ExecutorCompletionService<>(executorService);
 
@@ -61,10 +61,23 @@ public class NewsController {
                 MediaType mediaType = MediaTypeUtils.getMediaTypeForFileName(this.servletContext, filename);
                 response.setContentType(mediaType.getType());
                 response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + filename);
-                BufferedOutputStream outStream = new BufferedOutputStream(response.getOutputStream());
-                document.write(outStream);
-                outStream.flush();
-                outStream.close();
+                BufferedOutputStream outStream = null;
+                try {
+                    outStream = new BufferedOutputStream(response.getOutputStream());
+                    document.write(outStream);
+                    outStream.flush();
+                    logger.info("Successfully write stream for file name {}", filename);
+                } catch (IOException e) {
+                    logger.error("Failed write stream for file name {} - {}", filename, e.getMessage());
+                } finally {
+                    try {
+                        if (outStream != null) {
+                            outStream.close();
+                        }
+                    } catch (IOException e) {
+                        logger.error("Failed close stream for file name {} - {}", filename, e.getMessage());
+                    }
+                }
             }
         }
     }
