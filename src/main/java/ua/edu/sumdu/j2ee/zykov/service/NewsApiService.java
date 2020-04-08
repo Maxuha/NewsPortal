@@ -86,9 +86,11 @@ public class NewsApiService implements NewsService {
                 in = Network.getImageInputStream(article.getUrlToImage());
                 imageRun.addPicture(in, XWPFDocument.PICTURE_TYPE_PNG, "out.png", Units.toEMU(size /
                         (float) bufferedImage.getHeight() * bufferedImage.getWidth()), Units.toEMU(size));
-            }catch (IllegalArgumentException e) {
+            } catch (NullPointerException e) {
+                logger.error("No found image");
+            } catch (IllegalArgumentException e) {
                 logger.error("Illegal argument - " + e.getMessage());
-            }  catch (IllegalStateException e) {
+            } catch (IllegalStateException e) {
                 logger.error("Illegal state - " + e.getMessage());
             } catch (IOException e) {
                 logger.warn("Image not load - " + e.getMessage());
