@@ -17,6 +17,8 @@ import ua.edu.sumdu.j2ee.zykov.util.MediaTypeUtils;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -38,9 +40,9 @@ public class NewsController {
 
     @RequestMapping(path = "/news", method = RequestMethod.GET)
     public void getInfoNews(HttpServletResponse response, @RequestParam(name = "country") String country,
-                            @RequestParam(name = "category") String category) throws IOException {
+                            @RequestParam(name = "category") String category) {
         News news = null;
-        XWPFDocument document = null;
+        XWPFDocument document;
         ExecutorService executorService = Executors.newFixedThreadPool(5);
         CompletionService<News> completionService = new ExecutorCompletionService<>(executorService);
 
@@ -48,21 +50,34 @@ public class NewsController {
             Future<News> submit = completionService.submit(() -> newsService.getNews(country, category, country + category));
             try {
                 news = submit.get();
-                document = newsService.getDocument(news);
             } catch (InterruptedException e) {
-                logger.error("Interrupted thread - " + e.getMessage());
+                logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
             } catch (ExecutionException e) {
-                logger.error("Execution thread - " + e.getMessage());
+                logger.error("Execution thread get news for country {} and category {} - {}", country, category, e.getMessage());
             }
             if (news != null) {
+                document = newsService.getDocument(news);
                 String filename = "news_" + category + ".docx";
                 MediaType mediaType = MediaTypeUtils.getMediaTypeForFileName(this.servletContext, filename);
                 response.setContentType(mediaType.getType());
                 response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + filename);
-                BufferedOutputStream outStream = new BufferedOutputStream(response.getOutputStream());
-                document.write(outStream);
-                outStream.flush();
-                outStream.close();
+                BufferedOutputStream outStream = null;
+                try {
+                    outStream = new BufferedOutputStream(response.getOutputStream());
+                    document.write(outStream);
+                    outStream.flush();
+                    logger.info("Successfully write stream for file name {}", filename);
+                } catch (IOException e) {
+                    logger.error("Failed write stream for file name {} - {}", filename, e.getMessage());
+                } finally {
+                    try {
+                        if (outStream != null) {
+                            outStream.close();
+                        }
+                    } catch (IOException e) {
+                        logger.error("Failed close stream for file name {} - {}", filename, e.getMessage());
+                    }
+                }
             }
         }
     }

@@ -40,10 +40,10 @@ public class NewsApiConverter implements Converter<String, NewsApi> {
                 }
                 news = new NewsApi(status, totalPages, articles);
             } else {
-                logger.warn("Failed get news from service");
+                logger.warn("Failed get news from service 'newsapi.org'. Status error: {}", status);
             }
         } catch (JSONException e) {
-            logger.error("Failed json parse - " + e.getMessage());
+            logger.error("Failed json parse data from service 'newsapi.org' - {}. Json data: {}", e.getMessage(), s);
         }
         return news;
     }
