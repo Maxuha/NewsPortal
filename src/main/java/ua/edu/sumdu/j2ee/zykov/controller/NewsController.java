@@ -3,6 +3,8 @@ package ua.edu.sumdu.j2ee.zykov.controller;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -10,10 +12,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ua.edu.sumdu.j2ee.zykov.model.News;
 import ua.edu.sumdu.j2ee.zykov.service.NewsService;
+import ua.edu.sumdu.j2ee.zykov.util.MediaTypeUtils;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -21,9 +24,11 @@ import java.util.concurrent.*;
 public class NewsController {
     private static Logger logger = LoggerFactory.getLogger(NewsController.class);
     private final List<NewsService> newsServices;
+    private final ServletContext servletContext;
 
-    public NewsController(List<NewsService> newsServices) {
+    public NewsController(List<NewsService> newsServices, ServletContext servletContext) {
         this.newsServices = newsServices;
+        this.servletContext = servletContext;
     }
 
     @RequestMapping(path = "/", method = RequestMethod.GET)
@@ -32,10 +37,10 @@ public class NewsController {
     }
 
     @RequestMapping(path = "/news", method = RequestMethod.GET)
-    public ResponseEntity<?> getInfoNews(@RequestParam(name = "country") String country,
-                                         @RequestParam(name = "category") String category) {
+    public void getInfoNews(HttpServletResponse response, @RequestParam(name = "country") String country,
+                            @RequestParam(name = "category") String category) throws IOException {
         News news = null;
-        XWPFDocument document;
+        XWPFDocument document = null;
         ExecutorService executorService = Executors.newFixedThreadPool(5);
         CompletionService<News> completionService = new ExecutorCompletionService<>(executorService);
 
@@ -44,24 +49,21 @@ public class NewsController {
             try {
                 news = submit.get();
                 document = newsService.getDocument(news);
-                try (FileOutputStream outputStream = new FileOutputStream("news_" + category + ".docx")) {
-                    document.write(outputStream);
-                } catch (FileNotFoundException e) {
-                    logger.error("File not found - " + e.getMessage());
-                } catch (IOException e) {
-                    logger.error("Failed save document - " + e.getMessage());
-                } catch (NullPointerException e) {
-                    logger.info("No news");
-                }
             } catch (InterruptedException e) {
                 logger.error("Interrupted thread - " + e.getMessage());
             } catch (ExecutionException e) {
                 logger.error("Execution thread - " + e.getMessage());
             }
             if (news != null) {
-                return ResponseEntity.ok(news);
+                String filename = "news_" + category + ".docx";
+                MediaType mediaType = MediaTypeUtils.getMediaTypeForFileName(this.servletContext, filename);
+                response.setContentType(mediaType.getType());
+                response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + filename);
+                BufferedOutputStream outStream = new BufferedOutputStream(response.getOutputStream());
+                document.write(outStream);
+                outStream.flush();
+                outStream.close();
             }
         }
-        return ResponseEntity.ok("Empty");
     }
 }
