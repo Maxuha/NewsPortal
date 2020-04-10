@@ -137,4 +137,19 @@ public class NewsApiService implements NewsService {
         }
         return document;
     }
+
+    @Override
+    public String getJson(String country, String category, String countryCategoryKey) {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("country", country);
+        parameters.put("category", category);
+        String json = "";
+        try {
+            json = Network.getResponse("http://newsapi.org/v2/top-headlines", token, parameters);
+            logger.info("News successfully received from a remote server newsapi.org");
+        } catch (IOException e) {
+            logger.error("Failed to receive news a remote server newsapi.org - " + e.getMessage());
+        }
+        return json;
+    }
 }
