@@ -38,8 +38,8 @@ public class NewsController {
         return ResponseEntity.ok("Welcome to news portal!!!");
     }
 
-    @RequestMapping(path = "/news", method = RequestMethod.GET)
-    public void getInfoNews(HttpServletResponse response, @RequestParam(name = "country") String country,
+    @RequestMapping(path = "/news/doc", method = RequestMethod.GET)
+    public void getDocument(HttpServletResponse response, @RequestParam(name = "country") String country,
                             @RequestParam(name = "category") String category) {
         News news = null;
         XWPFDocument document;
@@ -79,6 +79,31 @@ public class NewsController {
                     }
                 }
             }
+        }
+    }
+
+    @RequestMapping(path = "/news/json", method = RequestMethod.GET)
+    public ResponseEntity<?> getJson(@RequestParam(name = "country") String country,
+                                     @RequestParam(name = "category") String category) {
+        String json = null;
+        ExecutorService executorService = Executors.newFixedThreadPool(5);
+        CompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
+
+        for (NewsService newsService : newsServices) {
+            Future<String> submit = completionService.submit(() -> newsService.getJson(country, category, country + category));
+            try {
+                json = submit.get();
+            } catch (InterruptedException e) {
+                logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
+            } catch (ExecutionException e) {
+                logger.error("Execution thread get news for country {} and category {} - {}", country, category, e.getMessage());
+            }
+        }
+
+        if (json != null) {
+            return ResponseEntity.ok(json);
+        } else {
+            return ResponseEntity.ok("Empty news");
         }
     }
 }

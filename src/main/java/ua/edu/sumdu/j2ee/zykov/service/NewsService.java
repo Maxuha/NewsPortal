@@ -7,4 +7,5 @@ public interface NewsService {
     News getNews(String country, String category, String countryCategoryKey);
     News getNewsAndPut(String country, String category, String countryCategoryKey);
     XWPFDocument getDocument(News news);
+    String getJson(String country, String category, String countryCategoryKey);
 }
