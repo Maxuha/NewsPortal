@@ -22,7 +22,7 @@ import java.util.concurrent.*;
 
 @RestController
 public class NewsController {
-    private static Logger logger = LoggerFactory.getLogger(NewsController.class);
+    private final static Logger logger = LoggerFactory.getLogger(NewsController.class);
     private final List<NewsService> newsServices;
     private final ServletContext servletContext;
 
