@@ -17,14 +17,12 @@ import ua.edu.sumdu.j2ee.zykov.util.MediaTypeUtils;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.*;
 
 @RestController
 public class NewsController {
-    private static Logger logger = LoggerFactory.getLogger(NewsController.class);
+    private final static Logger logger = LoggerFactory.getLogger(NewsController.class);
     private final List<NewsService> newsServices;
     private final ServletContext servletContext;
 
