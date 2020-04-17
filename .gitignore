@@ -29,3 +29,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Custom ###
+*.docx
+mvnw
+mvnw.cmd
+.mvn

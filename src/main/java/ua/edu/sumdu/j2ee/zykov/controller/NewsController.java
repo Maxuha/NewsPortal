@@ -17,6 +17,7 @@ import ua.edu.sumdu.j2ee.zykov.util.MediaTypeUtils;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -25,6 +26,8 @@ public class NewsController {
     private final static Logger logger = LoggerFactory.getLogger(NewsController.class);
     private final List<NewsService> newsServices;
     private final ServletContext servletContext;
+    private String[] countries;
+    private String[] categories;
 
     public NewsController(List<NewsService> newsServices, ServletContext servletContext) {
         this.newsServices = newsServices;
@@ -39,42 +42,54 @@ public class NewsController {
     @RequestMapping(path = "/news/doc", method = RequestMethod.GET)
     public void getDocument(HttpServletResponse response, @RequestParam(name = "country") String country,
                             @RequestParam(name = "category") String category) {
-        News news = null;
-        XWPFDocument document;
+        News news;
+        XWPFDocument document = new XWPFDocument();
+        StringBuilder filename = new StringBuilder("news_");
         ExecutorService executorService = Executors.newFixedThreadPool(5);
         CompletionService<News> completionService = new ExecutorCompletionService<>(executorService);
+        countries = country.split(",");
+        categories = category.split(",");
+        List<News> newsList = new ArrayList<>();
 
         for (NewsService newsService : newsServices) {
-            Future<News> submit = completionService.submit(() -> newsService.getNews(country, category, country + category));
-            try {
-                news = submit.get();
-            } catch (InterruptedException e) {
-                logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
-            } catch (ExecutionException e) {
-                logger.error("Execution thread get news for country {} and category {} - {}", country, category, e.getMessage());
-            }
-            if (news != null) {
-                document = newsService.getDocument(news);
-                String filename = "news_" + category + ".docx";
-                MediaType mediaType = MediaTypeUtils.getMediaTypeForFileName(this.servletContext, filename);
-                response.setContentType(mediaType.getType());
-                response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + filename);
-                BufferedOutputStream outStream = null;
-                try {
-                    outStream = new BufferedOutputStream(response.getOutputStream());
-                    document.write(outStream);
-                    outStream.flush();
-                    logger.info("Successfully write stream for file name {}", filename);
-                } catch (IOException e) {
-                    logger.error("Failed write stream for file name {} - {}", filename, e.getMessage());
-                } finally {
+            for (String tempCountry : countries) {
+                for (String tempCategory : categories) {
+                    Future<News> submit = completionService.submit(() -> newsService.getNews(tempCountry, tempCategory, tempCountry + tempCategory));
                     try {
-                        if (outStream != null) {
-                            outStream.close();
-                        }
-                    } catch (IOException e) {
-                        logger.error("Failed close stream for file name {} - {}", filename, e.getMessage());
+                        filename.append(tempCategory).append("_");
+                        news = submit.get();
+                        newsList.add(news);
+                    } catch (InterruptedException e) {
+                        logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
+                    } catch (ExecutionException e) {
+                        logger.error("Execution thread get news for country {} and category {} - {}", country, category, e.getMessage());
                     }
+                }
+                filename.append(tempCountry).append("_");
+            }
+            for (News tempNews : newsList) {
+                newsService.getDocument(tempNews, document);
+            }
+            filename.deleteCharAt(filename.lastIndexOf("_"));
+            filename.append(".docx");
+            MediaType mediaType = MediaTypeUtils.getMediaTypeForFileName(this.servletContext, filename.toString());
+            response.setContentType(mediaType.getType());
+            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + filename.toString());
+            BufferedOutputStream outStream = null;
+            try {
+                outStream = new BufferedOutputStream(response.getOutputStream());
+                document.write(outStream);
+                outStream.flush();
+                logger.info("Successfully write stream for file name {}", filename.toString());
+            } catch (IOException e) {
+                logger.error("Failed write stream for file name {} - {}", filename.toString(), e.getMessage());
+            } finally {
+                try {
+                    if (outStream != null) {
+                        outStream.close();
+                    }
+                } catch (IOException e) {
+                    logger.error("Failed close stream for file name {} - {}", filename.toString(), e.getMessage());
                 }
             }
         }
@@ -83,25 +98,27 @@ public class NewsController {
     @RequestMapping(path = "/news/json", method = RequestMethod.GET)
     public ResponseEntity<?> getJson(@RequestParam(name = "country") String country,
                                      @RequestParam(name = "category") String category) {
-        String json = null;
+        countries = country.split(",");
+        categories = category.split(",");
+        StringBuilder json = new StringBuilder("");
         ExecutorService executorService = Executors.newFixedThreadPool(5);
         CompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
 
         for (NewsService newsService : newsServices) {
-            Future<String> submit = completionService.submit(() -> newsService.getJson(country, category, country + category));
-            try {
-                json = submit.get();
-            } catch (InterruptedException e) {
-                logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
-            } catch (ExecutionException e) {
-                logger.error("Execution thread get news for country {} and category {} - {}", country, category, e.getMessage());
+            for (String tempCountry : countries) {
+                for (String tempCategory : categories) {
+                    Future<String> submit = completionService.submit(() -> newsService.getJson(tempCountry, tempCategory, tempCountry + tempCategory));
+                    try {
+                        json.append(submit.get());
+                    } catch (InterruptedException e) {
+                        logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
+                    } catch (ExecutionException e) {
+                        logger.error("Execution thread get news for country {} and category {} - {}", country, category, e.getMessage());
+                    }
+                }
             }
         }
 
-        if (json != null) {
-            return ResponseEntity.ok(json);
-        } else {
-            return ResponseEntity.ok("Empty news");
-        }
+        return ResponseEntity.ok(json.toString());
     }
 }

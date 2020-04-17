@@ -59,9 +59,8 @@ public class NewsApiService implements NewsService {
 
     @Cacheable(cacheNames = "document", key = "#news")
     @Override
-    public XWPFDocument getDocument(News news) {
+    public void getDocument(News news, XWPFDocument document) {
         int size = 128;
-        XWPFDocument document = new XWPFDocument();
         Article[] articles = news.getArticles();
         for (Article article : articles) {
             XWPFParagraph title = document.createParagraph();
@@ -135,7 +134,6 @@ public class NewsApiService implements NewsService {
             authorRun.setTextPosition(30);
             logger.info("Added news {} to document", article.getUrl());
         }
-        return document;
     }
 
     @Override
