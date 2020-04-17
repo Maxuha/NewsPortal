@@ -85,25 +85,25 @@ public class NewsController {
                                      @RequestParam(name = "category") String category) {
         String[] countries = country.split(",");
         String[] categories = category.split(",");
-        String json = null;
+        StringBuilder json = new StringBuilder("");
         ExecutorService executorService = Executors.newFixedThreadPool(5);
         CompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
 
         for (NewsService newsService : newsServices) {
-            Future<String> submit = completionService.submit(() -> newsService.getJson(country, category, country + category));
-            try {
-                json = submit.get();
-            } catch (InterruptedException e) {
-                logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
-            } catch (ExecutionException e) {
-                logger.error("Execution thread get news for country {} and category {} - {}", country, category, e.getMessage());
+            for (String tempCountry : countries) {
+                for (String tempCategory : categories) {
+                    Future<String> submit = completionService.submit(() -> newsService.getJson(tempCountry, tempCategory, tempCountry + tempCategory));
+                    try {
+                        json.append(submit.get());
+                    } catch (InterruptedException e) {
+                        logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
+                    } catch (ExecutionException e) {
+                        logger.error("Execution thread get news for country {} and category {} - {}", country, category, e.getMessage());
+                    }
+                }
             }
         }
 
-        if (json != null) {
-            return ResponseEntity.ok(json);
-        } else {
-            return ResponseEntity.ok("Empty news");
-        }
+        return ResponseEntity.ok(json.toString());
     }
 }
