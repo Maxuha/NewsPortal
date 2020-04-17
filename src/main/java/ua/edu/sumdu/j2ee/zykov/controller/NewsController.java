@@ -83,6 +83,8 @@ public class NewsController {
     @RequestMapping(path = "/news/json", method = RequestMethod.GET)
     public ResponseEntity<?> getJson(@RequestParam(name = "country") String country,
                                      @RequestParam(name = "category") String category) {
+        String[] countries = country.split(",");
+        String[] categories = category.split(",");
         String json = null;
         ExecutorService executorService = Executors.newFixedThreadPool(5);
         CompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
