@@ -25,6 +25,8 @@ public class NewsController {
     private final static Logger logger = LoggerFactory.getLogger(NewsController.class);
     private final List<NewsService> newsServices;
     private final ServletContext servletContext;
+    private String[] countries;
+    private String[] categories;
 
     public NewsController(List<NewsService> newsServices, ServletContext servletContext) {
         this.newsServices = newsServices;
@@ -43,37 +45,43 @@ public class NewsController {
         XWPFDocument document;
         ExecutorService executorService = Executors.newFixedThreadPool(5);
         CompletionService<News> completionService = new ExecutorCompletionService<>(executorService);
+        countries = country.split(",");
+        categories = category.split(",");
 
         for (NewsService newsService : newsServices) {
-            Future<News> submit = completionService.submit(() -> newsService.getNews(country, category, country + category));
-            try {
-                news = submit.get();
-            } catch (InterruptedException e) {
-                logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
-            } catch (ExecutionException e) {
-                logger.error("Execution thread get news for country {} and category {} - {}", country, category, e.getMessage());
-            }
-            if (news != null) {
-                document = newsService.getDocument(news);
-                String filename = "news_" + category + ".docx";
-                MediaType mediaType = MediaTypeUtils.getMediaTypeForFileName(this.servletContext, filename);
-                response.setContentType(mediaType.getType());
-                response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + filename);
-                BufferedOutputStream outStream = null;
-                try {
-                    outStream = new BufferedOutputStream(response.getOutputStream());
-                    document.write(outStream);
-                    outStream.flush();
-                    logger.info("Successfully write stream for file name {}", filename);
-                } catch (IOException e) {
-                    logger.error("Failed write stream for file name {} - {}", filename, e.getMessage());
-                } finally {
+            for (String tempCountry : countries) {
+                for (String tempCategory : categories) {
+                    Future<News> submit = completionService.submit(() -> newsService.getNews(tempCountry, tempCategory, tempCountry + tempCategory));
                     try {
-                        if (outStream != null) {
-                            outStream.close();
+                        news = submit.get();
+                    } catch (InterruptedException e) {
+                        logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
+                    } catch (ExecutionException e) {
+                        logger.error("Execution thread get news for country {} and category {} - {}", country, category, e.getMessage());
+                    }
+                    if (news != null) {
+                        document = newsService.getDocument(news);
+                        String filename = "news_" + category + ".docx";
+                        MediaType mediaType = MediaTypeUtils.getMediaTypeForFileName(this.servletContext, filename);
+                        response.setContentType(mediaType.getType());
+                        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + filename);
+                        BufferedOutputStream outStream = null;
+                        try {
+                            outStream = new BufferedOutputStream(response.getOutputStream());
+                            document.write(outStream);
+                            outStream.flush();
+                            logger.info("Successfully write stream for file name {}", filename);
+                        } catch (IOException e) {
+                            logger.error("Failed write stream for file name {} - {}", filename, e.getMessage());
+                        } finally {
+                            try {
+                                if (outStream != null) {
+                                    outStream.close();
+                                }
+                            } catch (IOException e) {
+                                logger.error("Failed close stream for file name {} - {}", filename, e.getMessage());
+                            }
                         }
-                    } catch (IOException e) {
-                        logger.error("Failed close stream for file name {} - {}", filename, e.getMessage());
                     }
                 }
             }
