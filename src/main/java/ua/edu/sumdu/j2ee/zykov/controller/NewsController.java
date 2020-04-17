@@ -61,7 +61,7 @@ public class NewsController {
                     }
                     if (news != null) {
                         document = newsService.getDocument(news);
-                        String filename = "news_" + category + ".docx";
+                        String filename = "news_" + tempCountry + "_" + tempCategory + ".docx";
                         MediaType mediaType = MediaTypeUtils.getMediaTypeForFileName(this.servletContext, filename);
                         response.setContentType(mediaType.getType());
                         response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + filename);
