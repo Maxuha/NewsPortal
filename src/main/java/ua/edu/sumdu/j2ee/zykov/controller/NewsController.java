@@ -3,6 +3,7 @@ package ua.edu.sumdu.j2ee.zykov.controller;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,8 @@ public class NewsController {
     private final ServletContext servletContext;
     private String[] countries;
     private String[] categories;
+    @Value("${thread.count}")
+    private int countThread;
 
     public NewsController(List<NewsService> newsServices, ServletContext servletContext) {
         this.newsServices = newsServices;
@@ -45,7 +48,7 @@ public class NewsController {
         News news;
         XWPFDocument document = new XWPFDocument();
         StringBuilder filename = new StringBuilder("news_");
-        ExecutorService executorService = Executors.newFixedThreadPool(5);
+        ExecutorService executorService = Executors.newFixedThreadPool(countThread);
         CompletionService<News> completionService = new ExecutorCompletionService<>(executorService);
         countries = country.split(",");
         categories = category.split(",");
@@ -100,8 +103,8 @@ public class NewsController {
                                      @RequestParam(name = "category") String category) {
         countries = country.split(",");
         categories = category.split(",");
-        StringBuilder json = new StringBuilder("[");
-        ExecutorService executorService = Executors.newFixedThreadPool(5);
+        StringBuilder json = new StringBuilder("");
+        ExecutorService executorService = Executors.newFixedThreadPool(countThread);
         CompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
 
         for (NewsService newsService : newsServices) {
