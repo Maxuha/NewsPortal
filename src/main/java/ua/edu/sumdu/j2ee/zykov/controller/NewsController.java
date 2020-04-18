@@ -100,7 +100,7 @@ public class NewsController {
                                      @RequestParam(name = "category") String category) {
         countries = country.split(",");
         categories = category.split(",");
-        StringBuilder json = new StringBuilder("");
+        StringBuilder json = new StringBuilder("[");
         ExecutorService executorService = Executors.newFixedThreadPool(5);
         CompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
 
@@ -118,7 +118,7 @@ public class NewsController {
                 }
             }
         }
-
+        json.append("]");
         return ResponseEntity.ok(json.toString());
     }
 }
