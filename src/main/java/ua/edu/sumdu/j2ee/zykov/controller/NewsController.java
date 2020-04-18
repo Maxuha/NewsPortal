@@ -113,6 +113,7 @@ public class NewsController {
                     Future<String> submit = completionService.submit(() -> newsService.getJson(tempCountry, tempCategory, tempCountry + tempCategory));
                     try {
                         json.append(submit.get());
+                        json.append(",");
                     } catch (InterruptedException e) {
                         logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
                     } catch (ExecutionException e) {
@@ -121,6 +122,7 @@ public class NewsController {
                 }
             }
         }
+        json.deleteCharAt(json.lastIndexOf(","));
         json.append("] ");
         return ResponseEntity.ok(json.toString());
     }
