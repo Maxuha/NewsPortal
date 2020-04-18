@@ -1,5 +1,6 @@
 package ua.edu.sumdu.j2ee.zykov.controller;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -116,6 +117,7 @@ public class NewsController {
                     Future<String> submit = completionService.submit(() -> newsService.getJson(tempCountry, tempCategory, tempCountry + tempCategory));
                     try {
                         json.append(submit.get());
+                        json.append(",");
                     } catch (InterruptedException e) {
                         logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
                     } catch (ExecutionException e) {
@@ -124,6 +126,7 @@ public class NewsController {
                 }
             }
         }
+        json.deleteCharAt(json.lastIndexOf(","));
         json.append("] ");
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -134,10 +137,10 @@ public class NewsController {
     public ResponseEntity<?> getXml(@RequestParam("country") String country,
                                     @RequestParam("category") String category) {
         ResponseEntity<?> responseEntity = getJson(country, category);
-        JSONObject object = new JSONObject(Objects.requireNonNull(responseEntity.getBody()).toString());
+        JSONArray array = new JSONArray(Objects.requireNonNull(responseEntity.getBody()).toString());
         String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
         xml += "<news>";
-        xml += XML.toString(object);
+        xml += XML.toString(array);
         xml += "</news>";
         System.out.println(xml);
         return ResponseEntity.ok()
