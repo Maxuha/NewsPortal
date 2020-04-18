@@ -121,7 +121,7 @@ public class NewsController {
                 }
             }
         }
-
+        json.append("]");
         return ResponseEntity.ok(json.toString());
     }
 }
