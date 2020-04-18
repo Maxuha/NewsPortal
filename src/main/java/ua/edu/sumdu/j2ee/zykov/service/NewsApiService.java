@@ -26,7 +26,7 @@ import java.util.Map;
 
 @Service
 public class NewsApiService implements NewsService {
-    private static Logger logger = LoggerFactory.getLogger(NewsApiService.class);
+    private static final Logger logger = LoggerFactory.getLogger(NewsApiService.class);
     @Value("${data.news.token}")
     private String token;
     private final NewsApiConverter newsApiConverter;
@@ -57,7 +57,6 @@ public class NewsApiService implements NewsService {
         return getNews(country, category, countryCategoryKey);
     }
 
-    @Cacheable(cacheNames = "document", key = "#news")
     @Override
     public void getDocument(News news, XWPFDocument document) {
         int size = 128;
