@@ -1,5 +1,7 @@
 package ua.edu.sumdu.j2ee.zykov.controller;
 
+import org.json.JSONObject;
+import org.json.XML;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.*;
 
 @RestController
@@ -121,7 +124,24 @@ public class NewsController {
                 }
             }
         }
-        json.append("]");
-        return ResponseEntity.ok(json.toString());
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(json.toString());
+    }
+
+    @RequestMapping(path = "/news/xml", method = RequestMethod.GET)
+    public ResponseEntity<?> getXml(@RequestParam("country") String country,
+                                    @RequestParam("category") String category) {
+        ResponseEntity<?> responseEntity = getJson(country, category);
+        JSONObject object = new JSONObject(Objects.requireNonNull(responseEntity.getBody()).toString());
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+        xml += "<news>";
+        xml += XML.toString(object);
+        xml += "</news>";
+        System.out.println(xml);
+        return ResponseEntity.ok()
+                             .contentType(MediaType.APPLICATION_XML)
+                             .body(xml);
     }
 }
