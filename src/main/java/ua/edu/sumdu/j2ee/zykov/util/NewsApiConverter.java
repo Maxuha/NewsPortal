@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 import ua.edu.sumdu.j2ee.zykov.model.Article;
-import ua.edu.sumdu.j2ee.zykov.model.News;
 import ua.edu.sumdu.j2ee.zykov.model.NewsApi;
 
 @Component
