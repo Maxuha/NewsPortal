@@ -32,8 +32,6 @@ public class NewsController {
     private final static Logger logger = LoggerFactory.getLogger(NewsController.class);
     private final List<NewsService> newsServices;
     private final ServletContext servletContext;
-    private String[] countries;
-    private String[] categories;
     @Value("${thread.count}")
     private int countThread;
 
@@ -48,17 +46,14 @@ public class NewsController {
     }
 
     @RequestMapping(path = "/news/doc", method = RequestMethod.GET)
-    public void getDocument(HttpServletResponse response, @RequestParam(name = "country") String country,
-                            @RequestParam(name = "category") String category) {
+    public void getDocument(HttpServletResponse response, @RequestParam(name = "country") String[] countries,
+                            @RequestParam(name = "category") String[] categories) {
         News news;
         XWPFDocument document = new XWPFDocument();
         StringBuilder filename = new StringBuilder("news_");
         ExecutorService executorService = Executors.newFixedThreadPool(countThread);
         CompletionService<News> completionService = new ExecutorCompletionService<>(executorService);
-        countries = country.split(",");
-        categories = category.split(",");
         List<News> newsList = new ArrayList<>();
-
         for (NewsService newsService : newsServices) {
             for (String tempCountry : countries) {
                 for (String tempCategory : categories) {
@@ -68,9 +63,9 @@ public class NewsController {
                         news = submit.get();
                         newsList.add(news);
                     } catch (InterruptedException e) {
-                        logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
+                        logger.error("Interrupted thread get news for country {} and category {} - {}", tempCountry, tempCategory, e.getMessage());
                     } catch (ExecutionException e) {
-                        logger.error("Execution thread get news for country {} and category {} - {}", country, category, e.getMessage());
+                        logger.error("Execution thread get news for country {} and category {} - {}", tempCountry, tempCategory, e.getMessage());
                     }
                 }
                 filename.append(tempCountry).append("_");
@@ -104,10 +99,8 @@ public class NewsController {
     }
 
     @RequestMapping(path = "/news", method = RequestMethod.GET, produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }, consumes = MediaType.ALL_VALUE)
-    public ResponseEntity<?> getNews(@RequestParam(name = "country") String country,
-                                     @RequestParam(name = "category") String category) {
-        countries = country.split(",");
-        categories = category.split(",");
+    public ResponseEntity<?> getNews(@RequestParam(name = "country") String[] countries,
+                                     @RequestParam(name = "category") String[] categories) {
         ExecutorService executorService = Executors.newFixedThreadPool(countThread);
         CompletionService<News> completionService = new ExecutorCompletionService<>(executorService);
         List<News> newsList = new ArrayList<>();
@@ -118,9 +111,9 @@ public class NewsController {
                     try {
                         newsList.add(submit.get());
                     } catch (InterruptedException e) {
-                        logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
+                        logger.error("Interrupted thread get news for country {} and category {} - {}", tempCountry, tempCategory, e.getMessage());
                     } catch (ExecutionException e) {
-                        logger.error("Execution thread get news for country {} and category {} - {}", country, category, e.getMessage());
+                        logger.error("Execution thread get news for country {} and category {} - {}", tempCountry, tempCategory, e.getMessage());
                     }
                 }
             }
