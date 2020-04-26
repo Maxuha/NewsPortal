@@ -103,7 +103,7 @@ public class NewsController {
         }
     }
 
-    @RequestMapping(path = "/news/json", method = RequestMethod.GET, produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }, consumes = MediaType.ALL_VALUE)
+    @RequestMapping(path = "/news", method = RequestMethod.GET, produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }, consumes = MediaType.ALL_VALUE)
     public ResponseEntity<?> getNews(@RequestParam(name = "country") String country,
                                      @RequestParam(name = "category") String category) {
         countries = country.split(",");
