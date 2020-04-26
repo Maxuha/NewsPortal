@@ -22,6 +22,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -58,80 +59,84 @@ public class NewsApiService implements NewsService {
     }
 
     @Override
-    public void getDocument(News news, XWPFDocument document) {
+    public XWPFDocument getDocument(List<News> newsList) {
         int size = 128;
-        Article[] articles = news.getArticles();
-        for (Article article : articles) {
-            XWPFParagraph title = document.createParagraph();
-            title.setAlignment(ParagraphAlignment.CENTER);
-            XWPFRun titleRun = title.createRun();
-            titleRun.setText(article.getTitle());
-            titleRun.setColor("000000");
-            titleRun.setBold(true);
-            titleRun.setFontFamily("Times New Roman");
-            titleRun.setFontSize(15);
+        XWPFDocument document = new XWPFDocument();
+        for (News news : newsList) {
+            Article[] articles = news.getArticles();
+            for (Article article : articles) {
+                XWPFParagraph title = document.createParagraph();
+                title.setAlignment(ParagraphAlignment.CENTER);
+                XWPFRun titleRun = title.createRun();
+                titleRun.setText(article.getTitle());
+                titleRun.setColor("000000");
+                titleRun.setBold(true);
+                titleRun.setFontFamily("Times New Roman");
+                titleRun.setFontSize(15);
 
-            XWPFParagraph image = document.createParagraph();
-            image.setAlignment(ParagraphAlignment.CENTER);
-            XWPFRun imageRun = image.createRun();
-            imageRun.setTextPosition(20);
+                XWPFParagraph image = document.createParagraph();
+                image.setAlignment(ParagraphAlignment.CENTER);
+                XWPFRun imageRun = image.createRun();
+                imageRun.setTextPosition(20);
 
-            InputStream in = null;
-            BufferedImage bufferedImage;
-            try {
-                in = Network.getImageInputStream(article.getUrlToImage());
-                bufferedImage = ImageIO.read(in);
-                in = Network.getImageInputStream(article.getUrlToImage());
-                imageRun.addPicture(in, XWPFDocument.PICTURE_TYPE_PNG, "out.png", Units.toEMU(size /
-                        (float) bufferedImage.getHeight() * bufferedImage.getWidth()), Units.toEMU(size));
-            } catch (NullPointerException e) {
-                logger.error("No found image {} - {}", article.getUrlToImage(), e.getMessage());
-            } catch (IllegalArgumentException e) {
-                logger.error("Illegal argument for image {} - {}", article.getUrlToImage(), e.getMessage());
-            } catch (IllegalStateException e) {
-                logger.error("Illegal state for image {} - {}", article.getUrlToImage(), e.getMessage());
-            } catch (IOException e) {
-                logger.error("Image not load {} - {}", article.getUrlToImage(), e.getMessage());
-            } catch (InvalidFormatException e) {
-                logger.error("Invalid format picture {} - {}", article.getUrlToImage(), e.getMessage());
-            } finally {
+                InputStream in = null;
+                BufferedImage bufferedImage;
                 try {
-                    if (in != null) {
-                        in.close();
-                    }
+                    in = Network.getImageInputStream(article.getUrlToImage());
+                    bufferedImage = ImageIO.read(in);
+                    in = Network.getImageInputStream(article.getUrlToImage());
+                    imageRun.addPicture(in, XWPFDocument.PICTURE_TYPE_PNG, "out.png", Units.toEMU(size /
+                            (float) bufferedImage.getHeight() * bufferedImage.getWidth()), Units.toEMU(size));
+                } catch (NullPointerException e) {
+                    logger.error("No found image {} - {}", article.getUrlToImage(), e.getMessage());
+                } catch (IllegalArgumentException e) {
+                    logger.error("Illegal argument for image {} - {}", article.getUrlToImage(), e.getMessage());
+                } catch (IllegalStateException e) {
+                    logger.error("Illegal state for image {} - {}", article.getUrlToImage(), e.getMessage());
                 } catch (IOException e) {
-                    logger.warn("Error close stream for load image {} - {}", article.getUrlToImage(), e.getMessage());
+                    logger.error("Image not load {} - {}", article.getUrlToImage(), e.getMessage());
+                } catch (InvalidFormatException e) {
+                    logger.error("Invalid format picture {} - {}", article.getUrlToImage(), e.getMessage());
+                } finally {
+                    try {
+                        if (in != null) {
+                            in.close();
+                        }
+                    } catch (IOException e) {
+                        logger.warn("Error close stream for load image {} - {}", article.getUrlToImage(), e.getMessage());
+                    }
                 }
+
+                XWPFParagraph description = document.createParagraph();
+                description.setAlignment(ParagraphAlignment.LEFT);
+                XWPFRun descriptionRun = description.createRun();
+                descriptionRun.setText(article.getDescription());
+                descriptionRun.setColor("000000");
+                descriptionRun.setBold(false);
+                descriptionRun.setFontFamily("Times New Roman");
+                descriptionRun.setFontSize(14);
+
+                XWPFParagraph url = document.createParagraph();
+                url.setAlignment(ParagraphAlignment.LEFT);
+                XWPFRun urlRun = url.createRun();
+                urlRun.setText(article.getUrl());
+                urlRun.setColor("009933");
+                urlRun.setBold(true);
+                urlRun.setFontFamily("Times New Roman");
+                urlRun.setFontSize(12);
+
+                XWPFParagraph author = document.createParagraph();
+                author.setAlignment(ParagraphAlignment.RIGHT);
+                XWPFRun authorRun = author.createRun();
+                authorRun.setText(article.getAuthor());
+                authorRun.setColor("000000");
+                authorRun.setBold(true);
+                authorRun.setFontFamily("Times New Roman");
+                authorRun.setFontSize(14);
+                authorRun.setTextPosition(30);
+                logger.info("Added news {} to document", article.getUrl());
             }
-
-            XWPFParagraph description = document.createParagraph();
-            description.setAlignment(ParagraphAlignment.LEFT);
-            XWPFRun descriptionRun = description.createRun();
-            descriptionRun.setText(article.getDescription());
-            descriptionRun.setColor("000000");
-            descriptionRun.setBold(false);
-            descriptionRun.setFontFamily("Times New Roman");
-            descriptionRun.setFontSize(14);
-
-            XWPFParagraph url = document.createParagraph();
-            url.setAlignment(ParagraphAlignment.LEFT);
-            XWPFRun urlRun = url.createRun();
-            urlRun.setText(article.getUrl());
-            urlRun.setColor("009933");
-            urlRun.setBold(true);
-            urlRun.setFontFamily("Times New Roman");
-            urlRun.setFontSize(12);
-
-            XWPFParagraph author = document.createParagraph();
-            author.setAlignment(ParagraphAlignment.RIGHT);
-            XWPFRun authorRun = author.createRun();
-            authorRun.setText(article.getAuthor());
-            authorRun.setColor("000000");
-            authorRun.setBold(true);
-            authorRun.setFontFamily("Times New Roman");
-            authorRun.setFontSize(14);
-            authorRun.setTextPosition(30);
-            logger.info("Added news {} to document", article.getUrl());
         }
+        return document;
     }
 }

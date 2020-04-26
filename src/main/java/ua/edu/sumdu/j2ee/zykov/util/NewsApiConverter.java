@@ -15,7 +15,7 @@ import ua.edu.sumdu.j2ee.zykov.model.NewsApi;
 public class NewsApiConverter implements Converter<String, NewsApi> {
     private static Logger logger = LoggerFactory.getLogger(NewsApiConverter.class);
     @Value("${data.image.url}")
-    private static String urlToNoImage;
+    private String urlToNoImage;
 
     @Override
     public NewsApi convert(String s) {
@@ -31,6 +31,7 @@ public class NewsApiConverter implements Converter<String, NewsApi> {
                 JSONObject object;
                 for (int i = 0; i < articles.length; i++) {
                     object = (JSONObject) array.get(i);
+
                     articles[i] = new Article(object.getString("title"),
                             object.isNull("description") ? "Описания нету" : object.getString("description"),
                             object.isNull("author") ? "Неизвестный источник" : object.getString("author"),

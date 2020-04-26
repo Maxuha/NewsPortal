@@ -70,9 +70,7 @@ public class NewsController {
                 }
                 filename.append(tempCountry).append("_");
             }
-            for (News tempNews : newsList) {
-                newsService.getDocument(tempNews, document);
-            }
+            document = newsService.getDocument(newsList);
             filename.deleteCharAt(filename.lastIndexOf("_"));
             filename.append(".docx");
             MediaType mediaType = MediaTypeUtils.getMediaTypeForFileName(this.servletContext, filename.toString());
