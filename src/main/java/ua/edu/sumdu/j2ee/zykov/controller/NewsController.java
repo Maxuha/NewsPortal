@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +24,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.*;
 
 @RestController
@@ -101,22 +103,20 @@ public class NewsController {
         }
     }
 
-    @RequestMapping(path = "/news/json", method = RequestMethod.GET)
-    public ResponseEntity<?> getJson(@RequestParam(name = "country") String country,
+    @RequestMapping(path = "/news", method = RequestMethod.GET, produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }, consumes = MediaType.ALL_VALUE)
+    public ResponseEntity<?> getNews(@RequestParam(name = "country") String country,
                                      @RequestParam(name = "category") String category) {
         countries = country.split(",");
         categories = category.split(",");
-        StringBuilder json = new StringBuilder("[");
         ExecutorService executorService = Executors.newFixedThreadPool(countThread);
-        CompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
-
+        CompletionService<News> completionService = new ExecutorCompletionService<>(executorService);
+        List<News> newsList = new ArrayList<>();
         for (NewsService newsService : newsServices) {
             for (String tempCountry : countries) {
                 for (String tempCategory : categories) {
-                    Future<String> submit = completionService.submit(() -> newsService.getJson(tempCountry, tempCategory, tempCountry + tempCategory));
+                    Future<News> submit = completionService.submit(() -> newsService.getNews(tempCountry, tempCategory, tempCountry + tempCategory));
                     try {
-                        json.append(submit.get());
-                        json.append(",");
+                        newsList.add(submit.get());
                     } catch (InterruptedException e) {
                         logger.error("Interrupted thread get news for country {} and category {} - {}", country, category, e.getMessage());
                     } catch (ExecutionException e) {
@@ -125,25 +125,6 @@ public class NewsController {
                 }
             }
         }
-        json.deleteCharAt(json.lastIndexOf(","));
-        json.append("] ");
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(json.toString());
-    }
-
-    @RequestMapping(path = "/news/xml", method = RequestMethod.GET)
-    public ResponseEntity<?> getXml(@RequestParam("country") String country,
-                                    @RequestParam("category") String category) {
-        ResponseEntity<?> responseEntity = getJson(country, category);
-        JSONArray array = new JSONArray(Objects.requireNonNull(responseEntity.getBody()).toString());
-        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-        xml += "<news>";
-        xml += XML.toString(array);
-        xml += "</news>";
-        System.out.println(xml);
-        return ResponseEntity.ok()
-                             .contentType(MediaType.APPLICATION_XML)
-                             .body(xml);
+        return Optional.of(newsList).map(result -> new ResponseEntity<>(result, HttpStatus.OK)).orElse(new ResponseEntity<>(HttpStatus.NO_CONTENT));
     }
 }
