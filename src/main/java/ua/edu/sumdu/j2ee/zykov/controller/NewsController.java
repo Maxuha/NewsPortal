@@ -96,19 +96,9 @@ public class NewsController {
         }
     }
 
-    @RequestMapping(path = "/news", method = RequestMethod.GET, produces = { MediaType.APPLICATION_XML_VALUE }, params = "format=xml")
-    public ResponseEntity<?> getNewsXml(@RequestParam(name = "country") String[] countries,
-                                     @RequestParam(name = "category") String[] categories) {
-        return getResponseEntity(countries, categories);
-    }
-
-    @RequestMapping(path = "/news", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE }, params = "format=json")
-    public ResponseEntity<?> getNewsJson(@RequestParam(name = "country") String[] countries,
-                                     @RequestParam(name = "category") String[] categories) {
-        return getResponseEntity(countries, categories);
-    }
-
-    private ResponseEntity<?> getResponseEntity(@RequestParam(name = "country") String[] countries, @RequestParam(name = "category") String[] categories) {
+    @RequestMapping(value = "/news", method = RequestMethod.GET, produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
+    public ResponseEntity<?> getNews(@RequestParam(name = "country") String[] countries,
+                                         @RequestParam(name = "category") String[] categories) {
         ExecutorService executorService = Executors.newFixedThreadPool(countThread);
         CompletionService<News> completionService = new ExecutorCompletionService<>(executorService);
         List<News> newsList = new ArrayList<>();
